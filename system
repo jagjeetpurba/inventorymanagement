@@ -1,0 +1,133 @@
+
+import pywhatkit as pwt
+from types import NoneType
+import mysql.connector as s
+import datetime as t
+
+
+b = int(input("ENTERED SYSTEM PASSWORD:"))
+if(b == 0000):
+      print("YOU SUCCESSFULLY LOGIN!")
+else:
+      print("WRONG PASSWORD,TRY AGAIN!")
+      exit()
+
+sqlcon=s.connect(
+        host="localhost",
+        username="root",
+        password="",
+        database="project")  
+
+c=sqlcon.cursor(buffered=True)
+
+def start():
+    print("---Stock & Inventory management system---")
+    print("      -Available options-  ")
+    print("1. Sale")
+    print("2. Purchase")
+    print("3. Update price")
+    print("4. Display stock")
+    print("5. Exit")
+    num=int(input("Enter preffered choice: "))
+    if(num == 1):
+        sale()
+    elif(num == 2):
+        purchase()
+    elif(num == 3):
+        update()
+    elif(num == 4):
+        stock()
+    elif(num == 5):
+        exit()
+    else:
+        print("Invalid input!!!!!")
+        print("Please try another option")
+
+def sale():
+    print("Product Id||Product name||Quantity||Price")
+    query='select * from stock'
+     
+    c.execute(query)
+    records=c.fetchall()
+    for i in records:
+        t_code,t_name,t_quan,t_price=i
+
+        print(f"{t_code}    ||   {t_name}    ||   {t_quan}    ||   {t_price}   ")
+    Cus1=input("Enter customer name: ")
+    Cus2=input("Enter customer mobile(with +91): ")
+    Cus3=input("Enter Date: ")
+    P_id=int(input("Enter product id: "))
+    Pname=input("Enter product name: ")
+    Quantity=int(input("Enter product quantity: "))
+    try:
+        for i in records:
+            t_code,t_name,t_quan,t_price=i
+            if(t_code == P_id):
+                break
+        net_quan=t_quan-Quantity
+        c.execute("update stock set Quantity='"+str(net_quan)+"' where Prod_id ='"+str(t_code)+"' and Quantity > 0")
+        sqlcon.commit()
+        pwt.sendwhatmsg(Cus2,"Thank you for your purchase in abc marketing",13,20,30,True,10)
+    except:
+        print("Enter quantity below available stock")
+    start()
+
+def update():
+    P_id=int(input("Enter product code: "))
+    new_price=int(input("Enter new price: "))
+    try:
+        
+        c.execute("update stock set msp='"+str(new_price)+"' where Prod_id='"+str(P_id)+"' and Prod_id<='"+ str(P_id)+"'")
+        print("Price sucessfully updated")
+    except:
+        print("----------------Enter details again and correctly!!!!!------------------------")
+    sqlcon.commit()
+    start()
+
+def purchase():
+    new=input("Whether new item purchased:(y or n)")
+    if(new == "y" or new == "Y"):
+        P_id=int(input("Enter product id: "))
+        P_name=input("Enter product name: ")
+        Quan=int(input("Enter product quantity: "))
+        mrp=int(input("Enter product mrp: "))
+        c.execute("insert into stock values('"+str(P_id)+"','"+P_name+"','"+str(Quan)+"','"+str(mrp)+"')")
+        sqlcon.commit()
+        print("record successfully inserted")
+    else:
+        print("Product Id||Product name||Quantity||Price")
+        query='select * from stock'
+         #c=sqlcon.cursor()
+        c.execute(query)
+        records=c.fetchall()
+        for i in records:
+            t_code,t_name,t_quan,t_price=i
+            print(f"{t_code}    ||   {t_name}    ||   {t_quan}    ||   {t_price}   ")
+        P_id=int(input("Enter product id: "))
+        Quan=int(input("Enter product quantity: "))
+
+        for i in records:
+            t_code,t_name,t_quan,t_price=i
+            if(t_code == P_id):
+                break
+        net_quan=t_quan+Quan
+        c.execute("update stock set Quantity='"+str(net_quan)+"' where Prod_id ='"+str(P_id)+"' and Quantity >0")
+        sqlcon.commit()
+        print("record successfully inserted")
+    start()
+
+
+def stock():
+    query='select * from stock'
+         #c=sqlcon.cursor()
+    c.execute(query)
+    records=c.fetchall()
+    for row in records:
+        print("Prod_id: ",row[0])
+        print("Prod_name: ",row[1])
+        print("Quantity: ",row[2])
+        print("Msp: ",row[3])
+        print()
+    start()
+    
+start()
